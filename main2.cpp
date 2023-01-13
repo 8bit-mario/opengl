@@ -1,7 +1,6 @@
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
 #include <iostream>
-#include <cmath>
 
 using namespace std;
 
@@ -64,13 +63,15 @@ int main (int argc, char *argv[])
 	std::cout << "max vertex attribs: " << nrattrib << std::endl;
 
 	float vertices[] = {
-		0.0f, 0.5f, 0.0f, 1.0f, 0.0f, 0.0f,
-		0.5f, -0.5f, 0.0f, 0.0f, 1.0f, 0.0f,
-		-0.5f, -0.5f, 0.0f, 0.0f, 0.0f, 1.0f,
+		0.5f, 0.5f, 0.0f,
+		0.5f, -0.5f, 0.0f,
+		-0.5f, -0.5f, 0.0f,
+		-0.5f, 0.5f, 0.0f
 	};
 
 	unsigned char indices[] = {
-		0,1,2,
+		0,1,3,
+		1,2,3
 	};
 
 	unsigned int vbo, vao;
@@ -88,14 +89,8 @@ int main (int argc, char *argv[])
 	const char *vertexShaderSource = R"(
 		#version 330 core
 		layout(location=0) in vec3 aPos;
-		layout(location=1) in vec3 aCol;
-		out vec3 outCol;
-		out vec3 outPos;
-		uniform float offset;
 		void main() {
-			gl_Position=vec4(aPos.x + offset, aPos.y, aPos.z, 1.0f);
-			outCol = aCol;
-			outPos = aPos;
+			gl_Position=vec4(aPos, 1.0f);
 		}
 		)";
 
@@ -108,12 +103,8 @@ int main (int argc, char *argv[])
 	const char* fragmentShaderSource = R"(
 		#version 330 core
 		out vec4 FragColor;
-		in vec3 outCol;
-		in vec3 outPos;
-		uniform vec4 color;
 		void main() {
-			FragColor = vec4(outCol, 1.0f);
-			//FragColor = vec4(outPos, 1.0f);
+			FragColor = vec4(1.0f, 0.5f, 0.2f, 1.0f);
 		}
 	)";
 
@@ -133,18 +124,15 @@ int main (int argc, char *argv[])
 	glDeleteShader(vertexShader);
 	glDeleteShader(fragmentShader);
 
-	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 6*sizeof(float), (void *) 0);
+	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3*sizeof(float), (void *) 0);
 	glEnableVertexAttribArray(0);
-	glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 6*sizeof(float), (void *) (3*sizeof(float)));
-	glEnableVertexAttribArray(1);
 	glBindBuffer(GL_ARRAY_BUFFER, 0);
 	glBindVertexArray(0);
 
 	bool wireframe_mode = false;
 	glViewport(0, 0, 800, 600);
-
 	while (!glfwWindowShouldClose(window)) {
-		if(glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS || glfwGetKey(window, GLFW_KEY_Q) == GLFW_PRESS)
+		if(glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
 			glfwSetWindowShouldClose(window, true);
 		if(glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS)
 			wireframe_mode = !wireframe_mode;
@@ -154,18 +142,11 @@ int main (int argc, char *argv[])
 			glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 		glClearColor(0.4f, 0.4f, 0.4f, 1.0f);
 		glClear(GL_COLOR_BUFFER_BIT);
-		int ucol = glGetUniformLocation(program, "color");
-		int uoff = glGetUniformLocation(program, "offset");
 		glUseProgram(program);
-		glUniform1f(uoff, 0.5f);
-		float green = 0.5f * cosf(glfwGetTime()) + 0.5f;
-		glUniform4f(ucol, 1.0f, green, 0.0f, 1.0f);
-
 		glBindVertexArray(vao);
 //		glDrawArrays(GL_TRIANGLES, 0, 3);
-		glDrawElements(GL_TRIANGLES, 3, GL_UNSIGNED_BYTE, 0);
+		glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_BYTE, 0);
 		glBindVertexArray(0);
-		glUseProgram(0);
 
 		glfwSwapBuffers(window);
 		glfwPollEvents();

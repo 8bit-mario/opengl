@@ -91,9 +91,8 @@ int main (int argc, char *argv[])
 		layout(location=1) in vec3 aCol;
 		out vec3 outCol;
 		out vec3 outPos;
-		uniform float offset;
 		void main() {
-			gl_Position=vec4(aPos.x + offset, aPos.y, aPos.z, 1.0f);
+			gl_Position=vec4(aPos, 1.0f);
 			outCol = aCol;
 			outPos = aPos;
 		}
@@ -155,9 +154,7 @@ int main (int argc, char *argv[])
 		glClearColor(0.4f, 0.4f, 0.4f, 1.0f);
 		glClear(GL_COLOR_BUFFER_BIT);
 		int ucol = glGetUniformLocation(program, "color");
-		int uoff = glGetUniformLocation(program, "offset");
 		glUseProgram(program);
-		glUniform1f(uoff, 0.5f);
 		float green = 0.5f * cosf(glfwGetTime()) + 0.5f;
 		glUniform4f(ucol, 1.0f, green, 0.0f, 1.0f);
 
