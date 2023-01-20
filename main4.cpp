@@ -1,4 +1,3 @@
-#include "shader.h"
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
 #include <iostream>
@@ -86,6 +85,54 @@ int main (int argc, char *argv[])
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ebo);
 	glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
 
+	const char *vertexShaderSource = R"(
+		#version 330 core
+		layout(location=0) in vec3 aPos;
+		layout(location=1) in vec3 aCol;
+		out vec3 outCol;
+		out vec3 outPos;
+		uniform float offset;
+		void main() {
+			gl_Position=vec4(aPos.x + offset, aPos.y, aPos.z, 1.0f);
+			outCol = aCol;
+			outPos = aPos;
+		}
+		)";
+
+	unsigned int vertexShader;
+	vertexShader = glCreateShader(GL_VERTEX_SHADER);
+	glShaderSource(vertexShader, 1, &vertexShaderSource, NULL);
+	glCompileShader(vertexShader);
+	check(vertexShader);
+
+	const char* fragmentShaderSource = R"(
+		#version 330 core
+		out vec4 FragColor;
+		in vec3 outCol;
+		in vec3 outPos;
+		uniform vec4 color;
+		void main() {
+			FragColor = vec4(outCol, 1.0f);
+			//FragColor = vec4(outPos, 1.0f);
+		}
+	)";
+
+	unsigned int fragmentShader;
+	fragmentShader = glCreateShader(GL_FRAGMENT_SHADER);
+	glShaderSource(fragmentShader, 1, &fragmentShaderSource, NULL);
+	glCompileShader(fragmentShader);
+	check(fragmentShader);
+
+	unsigned int program;
+	program = glCreateProgram();
+	glAttachShader(program, vertexShader);
+	glAttachShader(program, fragmentShader);
+	glLinkProgram(program);
+	checkLinking(program);
+
+	glDeleteShader(vertexShader);
+	glDeleteShader(fragmentShader);
+
 	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 6*sizeof(float), (void *) 0);
 	glEnableVertexAttribArray(0);
 	glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 6*sizeof(float), (void *) (3*sizeof(float)));
@@ -95,7 +142,6 @@ int main (int argc, char *argv[])
 
 	bool wireframe_mode = false;
 	glViewport(0, 0, 800, 600);
-	Shader shader("shader/simple_vertex.glsl", "shader/simple_fragment.glsl");
 
 	while (!glfwWindowShouldClose(window)) {
 		if(glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS || glfwGetKey(window, GLFW_KEY_Q) == GLFW_PRESS)
@@ -108,12 +154,10 @@ int main (int argc, char *argv[])
 			glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 		glClearColor(0.4f, 0.4f, 0.4f, 1.0f);
 		glClear(GL_COLOR_BUFFER_BIT);
-		int ucol = glGetUniformLocation(shader.ID, "color");
-//		int uoff = glGetUniformLocation(program, "offset");
-		//use program
-		shader.use();
-//		glUniform1f(uoff, 0.5f);
-		shader.setFloat("offset", 0.5f);
+		int ucol = glGetUniformLocation(program, "color");
+		int uoff = glGetUniformLocation(program, "offset");
+		glUseProgram(program);
+		glUniform1f(uoff, 0.5f);
 		float green = 0.5f * cosf(glfwGetTime()) + 0.5f;
 		glUniform4f(ucol, 1.0f, green, 0.0f, 1.0f);
 

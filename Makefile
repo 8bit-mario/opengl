@@ -7,7 +7,7 @@ INC_DIR=glad/include
 
 default: out/main
 
-out/main: out/main.o out/glad.o
+out/main: out/main.o out/glad.o out/shader.o
 	$(CPP) -o $@ $^ $(LIBS)
 
 out/main.o: main.cpp | out
@@ -16,6 +16,8 @@ out/main.o: main.cpp | out
 out/glad.o: glad.c | out
 	$(CPP) -o $@ -c $< -I$(INC_DIR)
 
+out/shader.o: shader.cpp | out
+	$(CPP) -o $@ -c $< -I$(INC_DIR)
 out:
 	mkdir -p $@
 
